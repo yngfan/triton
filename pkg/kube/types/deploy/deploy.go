@@ -63,8 +63,8 @@ func (d *Deploy) Unwrap() *tritonappsv1alpha1.DeployFlow {
 	return d.DeployFlow
 }
 
-func (d *Deploy) GetInstanceName() string {
-	return d.Spec.Application.InstanceName
+func (d *Deploy) GetCloneSetName() string {
+	return d.Spec.Application.CloneSetName
 }
 
 func (d *Deploy) GetCloneSetLabels() labels.Set {
@@ -72,7 +72,7 @@ func (d *Deploy) GetCloneSetLabels() labels.Set {
 	return d.getDefaultLabels()
 }
 func (d *Deploy) getDefaultLabels() labels.Set {
-	return workload.GetDefaultLabels(d.Spec.Application.AppName, d.Spec.Application.InstanceName, d.Spec.Application.AppID, d.Spec.Application.GroupID)
+	return workload.GetDefaultLabels(d.Spec.Application.AppName, d.Spec.Application.CloneSetName, d.Spec.Application.AppID, d.Spec.Application.GroupID)
 }
 
 // String returns the general purpose string representation

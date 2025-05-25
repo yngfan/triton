@@ -55,7 +55,7 @@ type reply struct {
 	GroupID      int    `json:"groupID"`
 	Namespace    string `json:"namespace"`
 	AppName      string `json:"appName"`
-	InstanceName string `json:"instanceName"`
+	CloneSetName string `json:"clonesetName"`
 	Replicas     int32  `json:"replicas"`
 	Action       string `json:"action"`
 	Mode         string `json:"mode,omitempty"`

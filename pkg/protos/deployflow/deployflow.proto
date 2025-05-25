@@ -34,7 +34,7 @@ message DeployMeta {
 
 message DeployFilter {
   string namespace = 1;
-  string instanceName = 2;
+  string clonesetName = 2;
   string action = 3;
   int32  start = 4;
   int32  pageSize = 5;

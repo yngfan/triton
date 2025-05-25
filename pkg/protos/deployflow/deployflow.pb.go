@@ -420,7 +420,7 @@ type Deploy struct {
 	AppID                 int32                  `protobuf:"varint,3,opt,name=appID,proto3" json:"appID,omitempty"`
 	GroupID               int32                  `protobuf:"varint,4,opt,name=groupID,proto3" json:"groupID,omitempty"`
 	AppName               string                 `protobuf:"bytes,5,opt,name=appName,proto3" json:"appName,omitempty"`
-	InstanceName          string                 `protobuf:"bytes,6,opt,name=instanceName,proto3" json:"instanceName,omitempty"`
+	CloneSetName          string                 `protobuf:"bytes,6,opt,name=clonesetName,proto3" json:"clonesetName,omitempty"`
 	Replicas              int32                  `protobuf:"varint,7,opt,name=replicas,proto3" json:"replicas,omitempty"`
 	Action                string                 `protobuf:"bytes,8,opt,name=action,proto3" json:"action,omitempty"`
 	AvailableReplicas     int32                  `protobuf:"varint,9,opt,name=availableReplicas,proto3" json:"availableReplicas,omitempty"`
@@ -513,9 +513,9 @@ func (x *Deploy) GetAppName() string {
 	return ""
 }
 
-func (x *Deploy) GetInstanceName() string {
+func (x *Deploy) GetCloneSetName() string {
 	if x != nil {
-		return x.InstanceName
+		return x.CloneSetName
 	}
 	return ""
 }

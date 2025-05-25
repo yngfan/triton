@@ -71,7 +71,7 @@ func setDeploy(d *tritonappsv1alpha1.DeployFlow) *pb.Deploy {
 		GroupID:              int32(d.Spec.Application.GroupID),
 		Namespace:            d.Namespace,
 		AppName:              d.Spec.Application.AppName,
-		InstanceName:         d.Spec.Application.InstanceName,
+		CloneSetName:         d.Spec.Application.CloneSetName,
 		Replicas:             *d.Spec.Application.Replicas,
 		Action:               d.Spec.Action,
 		Mode:                 string(idl.Mode()),
@@ -142,7 +142,7 @@ func matchFilter(f fetcher.DeployFilter, d *tritonappsv1alpha1.DeployFlow) bool 
 		return false
 	}
 
-	if f.InstanceName != "" && d.Spec.Application.InstanceName != f.InstanceName {
+	if f.InstanceName != "" && d.Spec.Application.CloneSetName != f.InstanceName {
 		return false
 	}
 

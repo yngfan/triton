@@ -70,26 +70,29 @@ func PatchDeploy(c *gin.Context) {
 }
 
 func CreateDeploy(c *gin.Context) {
+	// 获取命名空间参数
 	ns := c.Param("namespace")
-
+	// 绑定请求体到 DeployUpdateRequest 结构
 	r := &DeployUpdateRequest{}
 	err := c.ShouldBindJSON(r)
 	if err != nil {
 		response.BadRequestWithMessage(err.Error(), c)
 		return
 	}
-
+	// 初始化日志记录器
 	dLogger := log.WithFields(logrus.Fields{
 		"namespace":    ns,
-		"instanceName": r.ApplicationSpec.InstanceName,
+		"clonesetName": r.ApplicationSpec.CloneSetName,
 		"appID":        r.ApplicationSpec.AppID,
 		"groupID":      r.ApplicationSpec.GroupID,
 	})
+	// 创建k8s客户端管理器
 	mgr := kubeclient.NewManager()
 	cl := mgr.GetClient()
-
+	// 核心创建逻辑
 	updated, err := CreateUpdateDeploy(ns, r, cl, dLogger)
 	if err != nil {
+		// 错误处理逻辑
 		if terrors.IsConflict(err) {
 			response.ConflictWithMessage(err.Error(), c)
 		} else {
@@ -97,7 +100,7 @@ func CreateDeploy(c *gin.Context) {
 		}
 		return
 	}
-
+	// 构造响应
 	rep := setKubeDeployReply(updated)
 	response.Created(rep, c)
 	dLogger.Info("Finished to create deploy")
@@ -288,7 +291,7 @@ func createNonUpdateDeploy(ns, instanceName, action string, strategy *tritonapps
 		Replicas:     ics.Spec.Replicas,
 		AppName:      ics.GetAppName(),
 		Template:     ics.Spec.Template,
-		InstanceName: ics.Name,
+		CloneSetName: ics.Name,
 	}
 
 	req := &DeployNonUpdateRequest{

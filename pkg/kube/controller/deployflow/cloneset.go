@@ -39,7 +39,7 @@ import (
 
 func (r *DeployFlowReconciler) removeCloneSetOwner(idl *internaldeploy.Deploy) error {
 	cs := &kruiseappsv1alpha1.CloneSet{}
-	err := r.reader.Get(context.TODO(), types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.InstanceName}, cs)
+	err := r.reader.Get(context.TODO(), types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.CloneSetName}, cs)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (r *DeployFlowReconciler) removeCloneSetOwner(idl *internaldeploy.Deploy) e
 
 func (r *DeployFlowReconciler) setCloneSetOwner(idl *internaldeploy.Deploy) error {
 	cs := &kruiseappsv1alpha1.CloneSet{}
-	err := r.reader.Get(context.TODO(), types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.InstanceName}, cs)
+	err := r.reader.Get(context.TODO(), types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.CloneSetName}, cs)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (r *DeployFlowReconciler) removeCloneSetOwnerWithRetry(idl *internaldeploy.
 
 func (r *DeployFlowReconciler) takeOwnershipOfCloneSet(idl *internaldeploy.Deploy) error {
 	cs := &kruiseappsv1alpha1.CloneSet{}
-	err := r.reader.Get(context.TODO(), types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.InstanceName}, cs)
+	err := r.reader.Get(context.TODO(), types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.CloneSetName}, cs)
 	if err != nil {
 		return err
 	}
@@ -135,11 +135,11 @@ func (r *DeployFlowReconciler) processCloneSet(idl *internaldeploy.Deploy) error
 }
 
 // getPatchBytes returns the patch bytes for update
-// 1. if it is a Create, we should increase the replicas
-// 2. if it is a Update in batch pending stage, we should increase the replicas
-// 3. if it is a Update in batch baking stage, we should decrease the replicas and partition
-// 4. if it is a Update in the first batch pending stage, and there are already several updated
-//    replicas (it may happen in a rollback), we should adjust the replicas and partition accordingly。
+//  1. if it is a Create, we should increase the replicas
+//  2. if it is a Update in batch pending stage, we should increase the replicas
+//  3. if it is a Update in batch baking stage, we should decrease the replicas and partition
+//  4. if it is a Update in the first batch pending stage, and there are already several updated
+//     replicas (it may happen in a rollback), we should adjust the replicas and partition accordingly。
 func (r *DeployFlowReconciler) getPatchBytes(idl *internaldeploy.Deploy) []byte {
 	logger := r.logger.WithField("deploy", idl)
 	action := idl.Spec.Action
@@ -231,7 +231,7 @@ func (r *DeployFlowReconciler) updateCloneSet(idl *internaldeploy.Deploy) error 
 	}
 
 	tmp := &kruiseappsv1alpha1.CloneSet{}
-	if err := r.reader.Get(ctx, types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.InstanceName}, tmp); err != nil {
+	if err := r.reader.Get(ctx, types.NamespacedName{Namespace: idl.Namespace, Name: idl.Spec.Application.CloneSetName}, tmp); err != nil {
 		return err
 	}
 
@@ -263,7 +263,7 @@ func PatchCloneSet(deploy *tritonappsv1alpha1.DeployFlow, patchBytes []byte, cl 
 	err := cl.Patch(context.TODO(), &kruiseappsv1alpha1.CloneSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: deploy.Namespace,
-			Name:      deploy.Spec.Application.InstanceName,
+			Name:      deploy.Spec.Application.CloneSetName,
 		},
 	}, client.RawPatch(types.MergePatchType, patchBytes))
 	if err != nil {

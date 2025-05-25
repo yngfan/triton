@@ -36,7 +36,7 @@ func generate(idl *internaldeploy.Deploy) *kruiseappsv1alpha1.CloneSet {
 
 	return &kruiseappsv1alpha1.CloneSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      idl.GetInstanceName(),
+			Name:      idl.GetCloneSetName(),
 			Namespace: idl.Namespace,
 			Labels:    idl.GetCloneSetLabels(),
 		},

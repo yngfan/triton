@@ -57,10 +57,13 @@ const (
 
 // ApplicationSpec describes the new application state which will be created or updated by a Deploy
 type ApplicationSpec struct {
-	AppID        int    `json:"appID"`
-	GroupID      int    `json:"groupID"`
-	AppName      string `json:"appName"`
-	InstanceName string `json:"instanceName"`
+	AppID   int    `json:"appID"`
+	GroupID int    `json:"groupID"`
+	AppName string `json:"appName"`
+	// 这个名称命名有歧义，容易让人产生误解。应该是CloneSetName，cloneset层面唯一标识。
+	// 命名建议格式：<appID>-<appName>-<groupID>-<env>，示例：12122-my-web-app-10010-prod
+	//InstanceName string `json:"instanceName"`
+	CloneSetName string `json:"clonesetName"`
 
 	// Selector is a label query over pods that should match the replica count.
 	// It must match the pod template's labels.

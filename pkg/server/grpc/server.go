@@ -22,7 +22,6 @@ import (
 )
 
 func Serve() {
-
 	port := viper.GetString("grpc-addr")
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -43,13 +42,15 @@ func Serve() {
 			grpcrecovery.StreamServerInterceptor(opts...),
 		),
 	)
+	// 注册服务
 	deployflowpb.RegisterDeployFlowServer(grpcServer, &deploy.Service{})
 	applicationpb.RegisterApplicationServer(grpcServer, &application.Service{})
 	podpb.RegisterPodServer(grpcServer, &pod.Service{})
+	// 注册反射服务，这对于调试和使用 gRPC CLI 工具非常有用
 	reflection.Register(grpcServer)
 
 	defer grpcServer.GracefulStop()
-
+	// 阻塞式监听
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Errorf("Failed to serve: %v", err)
 		panic(err)

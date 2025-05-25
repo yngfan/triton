@@ -17,7 +17,7 @@ type generator struct {
 	replicas          int32
 	namespace         string
 	appName           string
-	instanceName      string
+	clonesetName      string
 	action            string
 	applicationSpec   *tritonappsv1alpha1.ApplicationSpec
 	updateStrategy    *tritonappsv1alpha1.DeployUpdateStrategy
@@ -33,7 +33,7 @@ func (g *generator) generate() *tritonappsv1alpha1.DeployFlow {
 
 	return &tritonappsv1alpha1.DeployFlow{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: fmt.Sprintf("%s-", g.instanceName),
+			GenerateName: fmt.Sprintf("%s-", g.clonesetName),
 			Namespace:    g.namespace,
 			Labels:       g.getDefaultLabels(),
 			Annotations:  g.getLastAppliedAnnotations(lastApplied),
@@ -44,7 +44,7 @@ func (g *generator) generate() *tritonappsv1alpha1.DeployFlow {
 				AppID:        g.applicationSpec.AppID,
 				GroupID:      g.applicationSpec.GroupID,
 				AppName:      g.applicationSpec.AppName,
-				InstanceName: g.applicationSpec.InstanceName,
+				CloneSetName: g.applicationSpec.CloneSetName,
 				Template:     g.applicationSpec.Template,
 				Replicas:     &g.replicas,
 			},
@@ -57,7 +57,7 @@ func (g *generator) generate() *tritonappsv1alpha1.DeployFlow {
 }
 
 func (g *generator) getDefaultLabels() labels.Set {
-	return workload.GetDefaultLabels(g.appName, g.instanceName, g.appID, g.groupID)
+	return workload.GetDefaultLabels(g.appName, g.clonesetName, g.appID, g.groupID)
 }
 
 func (g *generator) getLastAppliedAnnotations(lastApplied []byte) labels.Set {

@@ -102,7 +102,7 @@ func (s *Service) Restart(_ context.Context, in *pb.RestartRequest) (*pb.Restart
 		Replicas:     ics.Spec.Replicas,
 		AppName:      ics.GetAppName(),
 		Template:     ics.Spec.Template,
-		InstanceName: ics.Name,
+		CloneSetName: ics.Name,
 	}
 
 	req := &deployflow.DeployNonUpdateRequest{
@@ -157,7 +157,7 @@ func (s *Service) Scale(_ context.Context, in *pb.ScaleRequest) (*pb.ScaleReply,
 		Replicas:     &in.Replicas,
 		AppName:      ics.GetAppName(),
 		Template:     ics.Spec.Template,
-		InstanceName: ics.Name,
+		CloneSetName: ics.Name,
 	}
 
 	req := &deployflow.DeployNonUpdateRequest{

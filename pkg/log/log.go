@@ -3,14 +3,15 @@ package log
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"gopkg.in/natefinch/lumberjack.v2"
+	"io"
+	"os"
 	"path"
 	"runtime"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/triton-io/triton/pkg/log/hook/file"
 	"github.com/triton-io/triton/pkg/setting"
 )
 
@@ -38,12 +39,20 @@ func InitLog() {
 		level = logrus.InfoLevel
 	}
 	logger.SetLevel(level)
-	logger.SetOutput(ioutil.Discard)
 
 	// add hooks
-	ls := getEnabledLevels(level)
+	//ls := getEnabledLevels(level)
 
-	logger.Hooks.Add(file.NewHook(ls))
+	//logger.Hooks.Add(file.NewHook(ls))
+	// 日志轮转配置
+	fileWriter := &lumberjack.Logger{
+		Filename:   "~/logs/triton-logs/app.log",
+		MaxSize:    100,  // MB
+		MaxBackups: 3,    // 保留 3 个旧日志文件
+		MaxAge:     2,    // 保留 2 天
+		Compress:   true, // 压缩旧日志
+	}
+	logger.SetOutput(io.MultiWriter(fileWriter, os.Stdout))
 
 	logger.Info("Logger is initialized.")
 }

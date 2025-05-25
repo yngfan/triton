@@ -62,7 +62,7 @@ func CreateNonUpdateDeploy(r *DeployNonUpdateRequest, ns string, cl client.Clien
 	action := r.Action
 	logger.Infof("Start to %s application", action)
 
-	cs, found, err := fetcher.GetCloneSetInCache(ns, r.ApplicationSpec.InstanceName, cl)
+	cs, found, err := fetcher.GetCloneSetInCache(ns, r.ApplicationSpec.CloneSetName, cl)
 	if err != nil {
 		logger.WithError(err).Error("failed to fetch cloneSet")
 		return nil, err
@@ -97,7 +97,7 @@ func CreateNonUpdateDeploy(r *DeployNonUpdateRequest, ns string, cl client.Clien
 		Replicas:     &replicas,
 		AppName:      ics.GetAppName(),
 		Template:     ics.Spec.Template,
-		InstanceName: ics.Name,
+		CloneSetName: ics.Name,
 	}
 
 	//g := generator{
@@ -113,7 +113,7 @@ func CreateNonUpdateDeploy(r *DeployNonUpdateRequest, ns string, cl client.Clien
 		replicas:          replicas,
 		namespace:         ns,
 		appName:           r.ApplicationSpec.AppName,
-		instanceName:      r.ApplicationSpec.InstanceName,
+		clonesetName:      r.ApplicationSpec.CloneSetName,
 		action:            action,
 		applicationSpec:   r.ApplicationSpec,
 		nonUpdateStrategy: r.NonUpdateStrategy,
@@ -133,7 +133,7 @@ func CreateNonUpdateDeploy(r *DeployNonUpdateRequest, ns string, cl client.Clien
 func CreateUpdateDeploy(ns string, r *DeployUpdateRequest, cl client.Client, logger *logrus.Entry) (*tritonappsv1alpha1.DeployFlow, error) {
 	logger.Info("Start to create new deploy")
 
-	cs, found, err := fetcher.GetCloneSetInCache(ns, r.ApplicationSpec.InstanceName, cl)
+	cs, found, err := fetcher.GetCloneSetInCache(ns, r.ApplicationSpec.CloneSetName, cl)
 	if err != nil {
 		logger.WithError(err).Error("failed to get application")
 		return nil, err
@@ -162,7 +162,7 @@ func CreateUpdateDeploy(ns string, r *DeployUpdateRequest, cl client.Client, log
 		replicas:        replicas,
 		namespace:       ns,
 		appName:         r.ApplicationSpec.AppName,
-		instanceName:    r.ApplicationSpec.InstanceName,
+		clonesetName:    r.ApplicationSpec.CloneSetName,
 		action:          action,
 		applicationSpec: r.ApplicationSpec,
 		updateStrategy:  r.UpdateStrategy,
@@ -286,7 +286,7 @@ func SetDeploy(deploy *tritonappsv1alpha1.DeployFlow) *reply {
 		GroupID:      deploy.Spec.Application.GroupID,
 		Namespace:    deploy.Namespace,
 		AppName:      deploy.Spec.Application.AppName,
-		InstanceName: deploy.Spec.Application.InstanceName,
+		CloneSetName: deploy.Spec.Application.CloneSetName,
 		Replicas:     *deploy.Spec.Application.Replicas,
 		Action:       deploy.Spec.Action,
 		Mode:         string(internaldeploy.FromDeploy(deploy).Mode()),

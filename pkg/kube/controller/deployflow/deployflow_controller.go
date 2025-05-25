@@ -21,6 +21,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/spf13/viper"
+	"github.com/triton-io/triton/pkg/indexer"
+	"k8s.io/client-go/rest"
 	"reflect"
 	"strings"
 	"sync"
@@ -45,6 +48,7 @@ import (
 	"github.com/sirupsen/logrus"
 	tritonappsv1alpha1 "github.com/triton-io/triton/apis/apps/v1alpha1"
 	"github.com/triton-io/triton/pkg/log"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -64,13 +68,15 @@ var (
 // Add creates a new DeployFlow Controller and adds it to the Manager with default RBAC. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
+	// 将DeployFlow 控制器注册到管理器（Manager）
 	return add(mgr, newReconciler(mgr))
 }
 
 // DeployFlowReconciler reconciles a DeployFlow object
 type DeployFlowReconciler struct {
 	client.Client
-	Scheme        *runtime.Scheme
+	Scheme *runtime.Scheme
+	// 旧版本需要显示定义Reader
 	reader        client.Reader
 	logger        *logrus.Entry
 	reconcileFunc func(ctx context.Context, request reconcile.Request) (reconcile.Result, error)
@@ -78,17 +84,20 @@ type DeployFlowReconciler struct {
 	recorder record.EventRecorder
 }
 
+/*
+*
+创建具体的DeployFlow 协调器实例
+*/
 func newReconciler(mgr ctrl.Manager) reconcile.Reconciler {
 	logger := log.WithField("controller", "DeployFlow")
-	if err := mgr.GetFieldIndexer().IndexField(context.TODO(), &tritonappsv1alpha1.DeployFlow{}, "spec.Application.AppName", func(rawObj runtime.Object) []string {
-		d, ok := rawObj.(*tritonappsv1alpha1.DeployFlow)
-		if !ok {
-			logger.Errorf("failed to get deployflow resource")
-			return nil
-		}
-		return []string{d.Spec.Application.AppName}
-	}); err != nil {
-		logger.Errorf("failed to get filed indexer")
+	// 添加 CRD 检查
+	if !crdExist(mgr.GetConfig()) {
+		logger.Errorf("CRD %s is not installed, its controller will perform noops!", tritonappsv1alpha1.GroupVersion.String())
+		return nil
+	}
+	// 添加索引器
+	if err := indexer.AddDefaultIndexers(mgr); err != nil {
+		logger.Errorf("failed to add default indexer %s", err)
 		return nil
 	}
 
@@ -104,6 +113,21 @@ func newReconciler(mgr ctrl.Manager) reconcile.Reconciler {
 	reconciler.reconcileFunc = reconciler.doReconcile
 
 	return reconciler
+}
+
+// 检查 CRD 是否存在
+func crdExist(config *rest.Config) bool {
+	clientset, err := apiextensionsclient.NewForConfig(config)
+	if err != nil {
+		return false
+	}
+	deployflowName := viper.GetString("deployflow-name")
+	_, err = clientset.ApiextensionsV1().CustomResourceDefinitions().
+		Get(context.Background(),
+			deployflowName,
+			metav1.GetOptions{},
+		)
+	return err == nil
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -293,14 +317,14 @@ func (r *DeployFlowReconciler) processPendingDeploy(idl *internaldeploy.Deploy) 
 
 	cs, found, err := fetcher.GetCloneSetInCacheByDeploy(idl.Unwrap(), r.Client)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to fetch cloneSet %s", idl.Spec.Application.InstanceName)
+		logger.WithError(err).Errorf("failed to fetch cloneSet %s", idl.Spec.Application.CloneSetName)
 		return err
 	} else if !found {
 		if idl.Spec.Action != setting.Create {
 			idl.MarkAsFailed()
 			return nil
 		}
-		logger.Infof("cloneSet %s does not exist, start to create it", idl.Spec.Application.InstanceName)
+		logger.Infof("cloneSet %s does not exist, start to create it", idl.Spec.Application.CloneSetName)
 		err := r.createCloneSet(idl)
 		if err != nil {
 			logger.WithError(err).Error("failed to create cloneSet")
@@ -334,15 +358,15 @@ func (r *DeployFlowReconciler) processPendingDeploy(idl *internaldeploy.Deploy) 
 		}
 
 		if idl.RevisionChanged() {
-			logger.Infof("cloneSet %s is found, start to update it", idl.Spec.Application.InstanceName)
+			logger.Infof("cloneSet %s is found, start to update it", idl.Spec.Application.CloneSetName)
 			if err := r.updateCloneSet(idl); err != nil {
 				logger.WithError(err).Error("Failed to update cloneSet")
 				return err
 			}
 		} else {
-			logger.Infof("Taking ownership of cloneSet %s", idl.Spec.Application.InstanceName)
+			logger.Infof("Taking ownership of cloneSet %s", idl.Spec.Application.CloneSetName)
 			if err := r.takeOwnershipOfCloneSet(idl); err != nil {
-				logger.WithError(err).Errorf("Failed to set owner for cloneSet %s", idl.Spec.Application.InstanceName)
+				logger.WithError(err).Errorf("Failed to set owner for cloneSet %s", idl.Spec.Application.CloneSetName)
 				return err
 			}
 		}
@@ -546,7 +570,7 @@ func (r *DeployFlowReconciler) processBatchFinishedDeploy(idl *internaldeploy.De
 		patchBytes := []byte(fmt.Sprintf(`{"spec":{"scaleStrategy":{"podsToDelete":%v}}}`, pods))
 		err := PatchCloneSet(idl.Unwrap(), patchBytes, r.Client)
 		if err != nil {
-			logger.Errorf("patch cloneset %v failed, error is %v", idl.Unwrap().Spec.Application.InstanceName, err)
+			logger.Errorf("patch cloneset %v failed, error is %v", idl.Unwrap().Spec.Application.CloneSetName, err)
 			return err
 		}
 
@@ -965,12 +989,12 @@ func (r *DeployFlowReconciler) DeleteCloneSetWhenActionIsScaleInZero(dl *tritona
 		// get cloneSet owned by deployflow
 		cs, found, err := fetcher.GetCloneSetInCacheByDeploy(dl, r.Client)
 		if err != nil || !found {
-			r.logger.Errorf("failed to found cloneSet %s, error is %v", idl.Spec.Application.InstanceName, err)
-			return fmt.Errorf("failed to found cloneSet %s, error is %v", idl.Spec.Application.InstanceName, err)
+			r.logger.Errorf("failed to found cloneSet %s, error is %v", idl.Spec.Application.CloneSetName, err)
+			return fmt.Errorf("failed to found cloneSet %s, error is %v", idl.Spec.Application.CloneSetName, err)
 		}
 		err = r.Client.Delete(context.TODO(), cs)
 		if err != nil {
-			r.logger.Errorf("failed to delete cloneSet %s", idl.Spec.Application.InstanceName)
+			r.logger.Errorf("failed to delete cloneSet %s", idl.Spec.Application.CloneSetName)
 			return err
 		}
 	}
@@ -987,3 +1011,22 @@ func DeletePod(ns, name string, cl client.Client) error {
 
 	return client.IgnoreNotFound(err)
 }
+
+//func (r *DeployFlowReconciler) SetupWithManager(mgr ctrl.Manager) error {
+//	// 添加必要的索引字段
+//	if err := mgr.GetFieldIndexer().IndexField(
+//		context.Background(),
+//		&tritonappsv1alpha1.DeployFlow{},
+//		"spec.instanceRef.name",
+//		func(rawObj client.Object) []string {
+//			deployFlow := rawObj.(*tritonappsv1alpha1.DeployFlow)
+//			return []string{deployFlow.Spec.InstanceRef.Name}
+//		},
+//	); err != nil {
+//		return err
+//	}
+//
+//	return ctrl.NewControllerManagedBy(mgr).
+//		For(&tritonappsv1alpha1.DeployFlow{}).
+//		Complete(r)
+//}

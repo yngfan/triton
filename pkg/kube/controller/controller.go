@@ -24,10 +24,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
+/*
+*
+切片用于存储所有控制器的初始化函数。
+每个控制器都有一个初始化函数，该函数接受一个 manager.Manager 作为参数，并返回一个 error。
+这个切片用于存储所有控制器的初始化函数，以便在主函数中调用它们。
+主函数会遍历这个切片，调用每个控制器的初始化函数，将控制器添加到管理器中。
+如果控制器的 CRD 未安装，则会跳过该控制器的初始化。
+如果控制器的 CRD 安装失败，则会返回错误。
+如果控制器的初始化函数返回错误，则会跳过该控制器的初始化。
+如果控制器的初始化函数返回 nil，则会将控制器添加到管理器中。
+*/
 var controllerAddFuncs []func(manager.Manager) error
 
 func init() {
+	// 将 deployflow 控制器的 Add 方法注册到控制器列表
 	controllerAddFuncs = append(controllerAddFuncs, deployflow.Add)
+	// 将 cloneset 控制器的 Add 方法注册到控制器列表
 	controllerAddFuncs = append(controllerAddFuncs, cloneset.Add)
 }
 
