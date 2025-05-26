@@ -24,7 +24,7 @@ type Service struct {
 func (s *Service) Gets(_ context.Context, in *pb.GetsRequest) (*pb.PodsReply, error) {
 	f := &podservice.Filter{
 		Namespace:    in.Filter.Namespace,
-		InstanceName: in.Filter.InstanceName,
+		CloneSetName: in.Filter.CloneSetName,
 		IP:           in.Filter.Ip,
 	}
 	pods, err := podservice.FetchPods(f, labels.Everything(), in.NoSort)

@@ -12,13 +12,13 @@ import (
 
 type Filter struct {
 	Namespace    string
-	InstanceName string
+	CloneSetName string
 	IP           string
 }
 
 func (f *Filter) LabelSelector(cl client.Client) labels.Selector {
-	if f.InstanceName != "" {
-		cs, found, err := fetcher.GetCloneSetInCache(f.Namespace, f.InstanceName, cl)
+	if f.CloneSetName != "" {
+		cs, found, err := fetcher.GetCloneSetInCache(f.Namespace, f.CloneSetName, cl)
 		if err != nil || !found {
 			return nil
 		}

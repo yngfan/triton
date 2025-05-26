@@ -77,7 +77,7 @@ func setGlobalConfig() {
 	flag.StringVar(&healthProbeAddr, "health-probe-addr", ":8000", "The address the healthz/readyz endpoint binds to.")
 	flag.BoolVar(&allowPrivileged, "allow-privileged", true, "If true, allow privileged containers. It will only work if api-server is also"+
 		"started with --allow-privileged=true.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", true, "Whether you need to enable leader election.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Whether you need to enable leader election.")
 	// 领导选举的命名空间,默认为 triton-system。
 	flag.StringVar(&leaderElectionNamespace, "leader-election-namespace", "triton-system",
 		"This determines the namespace in which the leader election configmap will be created, it will use in-cluster namespace if empty.")

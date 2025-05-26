@@ -133,7 +133,7 @@ func (d *Deploy) GetNotContainerReadyPods() []string {
 	var notContainerReadyPods []string
 	f := &podservice.Filter{
 		Namespace:    d.Namespace,
-		InstanceName: d.Spec.Application.AppName,
+		CloneSetName: d.Spec.Application.CloneSetName,
 	}
 	pods, err := podservice.FetchPods(f, labels.Everything(), true)
 	if err != nil {

@@ -130,7 +130,7 @@ func grpcFilterToFetcherFilter(f *pb.DeployFilter) fetcher.DeployFilter {
 
 	return fetcher.DeployFilter{
 		Namespace:    f.Namespace,
-		InstanceName: f.InstanceName,
+		CloneSetName: f.CloneSetName,
 		Start:        int(f.Start),
 		PageSize:     int(f.PageSize),
 		After:        after,
@@ -142,7 +142,7 @@ func matchFilter(f fetcher.DeployFilter, d *tritonappsv1alpha1.DeployFlow) bool 
 		return false
 	}
 
-	if f.InstanceName != "" && d.Spec.Application.CloneSetName != f.InstanceName {
+	if f.CloneSetName != "" && d.Spec.Application.CloneSetName != f.CloneSetName {
 		return false
 	}
 

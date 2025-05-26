@@ -76,6 +76,8 @@ spec:
                 properties:
                   appID:
                     type: integer
+                  clonesetName:
+                    type: string
                   appName:
                     type: string
                   applicationLabel:
@@ -6916,6 +6918,7 @@ spec:
                 required:
                 - appID
                 - appName
+                - clonesetName
                 - groupID
                 - selector
                 - template

@@ -91,7 +91,7 @@ type PodFilter struct {
 	unknownFields protoimpl.UnknownFields
 
 	Namespace    string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	InstanceName string `protobuf:"bytes,2,opt,name=instanceName,proto3" json:"instanceName,omitempty"`
+	CloneSetName string `protobuf:"bytes,2,opt,name=clonesetName,proto3" json:"clonesetName,omitempty"`
 	Ip           string `protobuf:"bytes,3,opt,name=ip,proto3" json:"ip,omitempty"`
 }
 
@@ -134,9 +134,9 @@ func (x *PodFilter) GetNamespace() string {
 	return ""
 }
 
-func (x *PodFilter) GetInstanceName() string {
+func (x *PodFilter) GetCloneSetName() string {
 	if x != nil {
-		return x.InstanceName
+		return x.CloneSetName
 	}
 	return ""
 }

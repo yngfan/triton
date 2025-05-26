@@ -179,10 +179,10 @@ func CreateUpdateDeploy(ns string, r *DeployUpdateRequest, cl client.Client, log
 	return updated, nil
 }
 
-func RollbackDeploy(ns, instanceName, deployName string, cl client.Client, strategy *tritonappsv1alpha1.DeployUpdateStrategy, logger *logrus.Entry) (*tritonappsv1alpha1.DeployFlow, string, error) {
+func RollbackDeploy(ns, clonesetName, deployName string, cl client.Client, strategy *tritonappsv1alpha1.DeployUpdateStrategy, logger *logrus.Entry) (*tritonappsv1alpha1.DeployFlow, string, error) {
 	action := setting.Rollback
 
-	cs, _, _ := fetcher.GetCloneSetInCache(ns, instanceName, cl)
+	cs, _, _ := fetcher.GetCloneSetInCache(ns, clonesetName, cl)
 
 	if err := preSteps(cs, action, cl); err != nil {
 		logger.WithError(err).Error("pre steps failed")

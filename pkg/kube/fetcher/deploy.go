@@ -43,7 +43,7 @@ func GetDeployInCacheOwningCloneSet(cs *kruiseappsv1alpha1.CloneSet, cl client.C
 
 type DeployFilter struct {
 	Namespace    string
-	InstanceName string
+	CloneSetName string
 	Start        int
 	PageSize     int
 	After        *time.Time
@@ -56,15 +56,15 @@ func GetDeploysInCache(f DeployFilter, cl client.Client) ([]*tritonappsv1alpha1.
 	}
 
 	opts := []client.ListOption{client.InNamespace(f.Namespace), client.Limit(max)}
-	if f.InstanceName != "" {
-		//cs, found, err := base.GetCloneSetInCache(ns, instanceName)
+	if f.CloneSetName != "" {
+		//cs, found, err := base.GetCloneSetInCache(ns, clonesetName)
 		//if err != nil {
 		//	return nil, err
 		//} else if !found {
 		//	return nil, nil
 		//}
 		//opts = append(opts, client.MatchingLabels(cs.Spec.Selector.MatchLabels))
-		opts = append(opts, client.MatchingFields{"spec.instanceName": f.InstanceName})
+		opts = append(opts, client.MatchingFields{"spec.clonesetName": f.CloneSetName})
 	}
 
 	d := &tritonappsv1alpha1.DeployFlowList{}

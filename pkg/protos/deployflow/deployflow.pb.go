@@ -92,7 +92,7 @@ type DeployFilter struct {
 	unknownFields protoimpl.UnknownFields
 
 	Namespace    string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	InstanceName string                 `protobuf:"bytes,2,opt,name=instanceName,proto3" json:"instanceName,omitempty"`
+	CloneSetName string                 `protobuf:"bytes,2,opt,name=clonesetName,proto3" json:"clonesetName,omitempty"`
 	Action       string                 `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
 	Start        int32                  `protobuf:"varint,4,opt,name=start,proto3" json:"start,omitempty"`
 	PageSize     int32                  `protobuf:"varint,5,opt,name=pageSize,proto3" json:"pageSize,omitempty"`
@@ -138,9 +138,9 @@ func (x *DeployFilter) GetNamespace() string {
 	return ""
 }
 
-func (x *DeployFilter) GetInstanceName() string {
+func (x *DeployFilter) GetCloneSetName() string {
 	if x != nil {
-		return x.InstanceName
+		return x.CloneSetName
 	}
 	return ""
 }

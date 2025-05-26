@@ -18,7 +18,7 @@ import (
 )
 
 type filter struct {
-	InstanceName string `form:"instanceName"`
+	CloneSetName string `form:"clonesetName"`
 	Action       string `form:"action"`
 	Start        int    `form:"start"`
 	PageSize     int    `form:"pageSize"`

@@ -28,24 +28,27 @@ func PatchDeploy(c *gin.Context) {
 		"namespace": ns,
 		"name":      name,
 	})
-
+	// 获取指定的 DeployFlow 对象
 	d := getDeployOrDie(ns, name, c)
 	if d == nil {
 		return
 	}
+	// 创建 manager客户端实例
 	mgr := kubeclient.NewManager()
 	cl := mgr.GetClient()
 	cr := mgr.GetAPIReader()
-
+	// 校验 DeployFlow
 	if internaldeploy.FromDeploy(d).Finished() {
 		response.ConflictWithMessage("changes on a finished deploy is not allowed", c)
 		return
 	}
-
+	// 动态绑定请求参数
 	var r interface{}
 	if internaldeploy.RevisionChanged(d.Spec.Action) {
+		// 更新策略，含批次控制参数
 		r = &tritonappsv1alpha1.DeployUpdateStrategy{}
 	} else {
+		// 非更新策略，重启，扩缩容
 		r = &tritonappsv1alpha1.DeployNonUpdateStrategy{}
 	}
 
@@ -53,7 +56,7 @@ func PatchDeploy(c *gin.Context) {
 		response.BadRequestWithMessage(err.Error(), c)
 		return
 	}
-
+	// 执行策略更新
 	d, err := patchDeployStrategy(ns, name, d.Spec.Action, cr, cl, r)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -64,7 +67,7 @@ func PatchDeploy(c *gin.Context) {
 		response.ServerErrorWithErrorAndMessage(err, "failed to patch deploy", c)
 		return
 	}
-
+	// 返回更新后的状态
 	rep := setKubeDeployReply(d)
 	response.OkDetailed(rep, "success", c)
 }
@@ -108,7 +111,7 @@ func CreateDeploy(c *gin.Context) {
 
 func CreateScale(c *gin.Context) {
 	ns := c.Param("namespace")
-	instanceName := c.Param("name")
+	clonesetName := c.Param("name")
 	action := setting.Scale
 
 	r := &scaleRequest{}
@@ -118,12 +121,12 @@ func CreateScale(c *gin.Context) {
 		return
 	}
 
-	createNonUpdateDeploy(ns, instanceName, action, r.NonUpdateStrategy, r.Replicas, c)
+	createNonUpdateDeploy(ns, clonesetName, action, r.NonUpdateStrategy, r.Replicas, c)
 }
 
 func CreateRollback(c *gin.Context) {
 	ns := c.Param("namespace")
-	instanceName := c.Param("name")
+	clonesetName := c.Param("name")
 
 	r := &rollbackRequest{}
 	err := c.ShouldBindJSON(r)
@@ -136,11 +139,11 @@ func CreateRollback(c *gin.Context) {
 
 	dLogger := log.WithFields(logrus.Fields{
 		"namespace":    ns,
-		"instanceName": instanceName,
+		"clonesetName": clonesetName,
 		"deploy":       r.DeployName,
 	})
 
-	updated, oldName, err := RollbackDeploy(ns, instanceName, r.DeployName, cl, r.UpdateStrategy, dLogger)
+	updated, oldName, err := RollbackDeploy(ns, clonesetName, r.DeployName, cl, r.UpdateStrategy, dLogger)
 	if err != nil {
 		if terrors.IsNotFound(err) {
 			response.NotFound(c)
@@ -159,7 +162,7 @@ func CreateRollback(c *gin.Context) {
 
 func CreateRestart(c *gin.Context) {
 	ns := c.Param("namespace")
-	instanceName := c.Param("name")
+	clonesetName := c.Param("name")
 	action := setting.Restart
 
 	r := &tritonappsv1alpha1.DeployNonUpdateStrategy{}
@@ -169,7 +172,7 @@ func CreateRestart(c *gin.Context) {
 		return
 	}
 
-	createNonUpdateDeploy(ns, instanceName, action, r, 0, c)
+	createNonUpdateDeploy(ns, clonesetName, action, r, 0, c)
 }
 
 func DeleteDeploy(c *gin.Context) {
@@ -236,7 +239,7 @@ func GetDeploys(c *gin.Context) {
 	mgr := kubeclient.NewManager()
 	cl := mgr.GetClient()
 
-	ds, err := fetcher.GetDeploysInCache(fetcher.DeployFilter{Namespace: ns, InstanceName: f.InstanceName, Start: f.Start, PageSize: f.PageSize}, cl)
+	ds, err := fetcher.GetDeploysInCache(fetcher.DeployFilter{Namespace: ns, CloneSetName: f.CloneSetName, Start: f.Start, PageSize: f.PageSize}, cl)
 	if err != nil {
 		dLogger.WithError(err).Error("failed to get deploys in cache")
 		response.ServerErrorWithErrorAndMessage(err, "failed to get deploys in cache", c)
@@ -265,15 +268,15 @@ func getDeployOrDie(ns, name string, c *gin.Context) *tritonappsv1alpha1.DeployF
 	return d
 }
 
-func createNonUpdateDeploy(ns, instanceName, action string, strategy *tritonappsv1alpha1.DeployNonUpdateStrategy, replicas int32, c *gin.Context) {
+func createNonUpdateDeploy(ns, clonesetName, action string, strategy *tritonappsv1alpha1.DeployNonUpdateStrategy, replicas int32, c *gin.Context) {
 	dLogger := log.WithFields(logrus.Fields{
 		"namespace":    ns,
-		"instanceName": instanceName,
+		"clonesetName": clonesetName,
 	})
 	mgr := kubeclient.NewManager()
 	cl := mgr.GetClient()
 
-	cs, found, err := fetcher.GetCloneSetInCache(ns, instanceName, cl)
+	cs, found, err := fetcher.GetCloneSetInCache(ns, clonesetName, cl)
 	if err != nil {
 		log.WithError(err).Error("failed to fetch cloneSet")
 		response.ServerErrorWithMessage(err.Error(), c)
