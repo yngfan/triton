@@ -108,6 +108,7 @@ func create(deploy *tritonappsv1alpha1.DeployFlow, cl client.Client) (*tritonapp
 	var updated *tritonappsv1alpha1.DeployFlow
 
 	// wait till new deploy object is synced to local cache
+	// 定时轮询，直到满足特定条件或者超时
 	err = wait.PollImmediate(100*time.Millisecond, 5*time.Second, func() (bool, error) {
 		var found bool
 		updated, found, err = fetcher.GetDeployInCache(deploy.Namespace, deploy.Name, cl)

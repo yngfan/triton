@@ -72,6 +72,10 @@ func PatchDeploy(c *gin.Context) {
 	response.OkDetailed(rep, "success", c)
 }
 
+/*
+*
+创建资源入口
+*/
 func CreateDeploy(c *gin.Context) {
 	// 获取命名空间参数
 	ns := c.Param("namespace")
@@ -89,7 +93,7 @@ func CreateDeploy(c *gin.Context) {
 		"appID":        r.ApplicationSpec.AppID,
 		"groupID":      r.ApplicationSpec.GroupID,
 	})
-	// 创建k8s客户端管理器
+	// 创建 k8s客户端管理器
 	mgr := kubeclient.NewManager()
 	cl := mgr.GetClient()
 	// 核心创建逻辑

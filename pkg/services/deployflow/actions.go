@@ -132,23 +132,23 @@ func CreateNonUpdateDeploy(r *DeployNonUpdateRequest, ns string, cl client.Clien
 
 func CreateUpdateDeploy(ns string, r *DeployUpdateRequest, cl client.Client, logger *logrus.Entry) (*tritonappsv1alpha1.DeployFlow, error) {
 	logger.Info("Start to create new deploy")
-
+	// 检查 CloneSet 是否存在
 	cs, found, err := fetcher.GetCloneSetInCache(ns, r.ApplicationSpec.CloneSetName, cl)
 	if err != nil {
 		logger.WithError(err).Error("failed to get application")
 		return nil, err
 	}
-
+	// 创建或者更新
 	action := setting.Create
 	if found && cs != nil {
 		action = setting.Update
 	}
-
+	// 执行预检查步骤
 	if err := preSteps(cs, action, cl); err != nil {
 		logger.WithError(err).Error("pre steps failed")
 		return nil, terrors.NewConflict("pre steps failed", err)
 	}
-
+	// 副本数
 	var replicas int32 = 1
 	if r.ApplicationSpec != nil && r.ApplicationSpec.Replicas != nil {
 		replicas = *r.ApplicationSpec.Replicas
@@ -167,8 +167,9 @@ func CreateUpdateDeploy(ns string, r *DeployUpdateRequest, cl client.Client, log
 		applicationSpec: r.ApplicationSpec,
 		updateStrategy:  r.UpdateStrategy,
 	}
+	// 生成 DeployFlow 自定义资源
 	deploy := g.generate()
-
+	// 实际创建 CRD 资源
 	updated, err := create(deploy, cl)
 	if err != nil {
 		logger.WithError(err).Error("failed to create deploy")

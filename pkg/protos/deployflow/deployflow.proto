@@ -21,6 +21,7 @@ service DeployFlow {
   // Watch watches Deploy status changes continuously till the target state is met.
   // If target state is not specified, use current desired target state in DeployFlow spec.
   // Watch will be stopped when the deploy is gone or finished or an error happens.
+  // 部署状态实时流
   rpc Watch (WatchRequest) returns (stream DeployReply) {}
 
   // ListAndWatch lists Deploys first, and then watch Deploy changes infinitely.

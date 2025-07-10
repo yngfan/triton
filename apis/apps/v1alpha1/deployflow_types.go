@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// 部署阶段
 type DeployPhase string
 
 const (
@@ -36,6 +37,7 @@ const (
 	Canceled      DeployPhase = "Canceled"
 )
 
+// 部署类型
 type DeployMode string
 
 const (
@@ -43,6 +45,7 @@ const (
 	Manual DeployMode = "manual"
 )
 
+// 批次阶段
 type BatchPhase string
 
 const (
@@ -55,19 +58,36 @@ const (
 	BatchBakeFailed  BatchPhase = "BakeFailed"
 )
 
+/**
+主要功能模块：
+
+1、身份标识系统
+AppID + GroupID：构成全局唯一标识
+AppName：人类可读的语义化名称
+CloneSetName：关联底层 Kubernetes 资源
+2、部署规格控制
+Replicas：控制应用副本数量
+Template：定义 Pod 的完整配置（容器镜像、环境变量、资源限制等）
+Selector：确保 Pod 与 Controller 的关联关系
+3、高级特性
+VolumeClaimTemplates：支持有状态应用的持久化存储
+ApplicationType：兼容不同 workload 类型（如 cloneset/advanced statefulset）
+ApplicationLabel：实现应用维度的监控/日志采集
+*/
 // ApplicationSpec describes the new application state which will be created or updated by a Deploy
 type ApplicationSpec struct {
 	AppID   int    `json:"appID"`
 	GroupID int    `json:"groupID"`
 	AppName string `json:"appName"`
-	// 这个名称命名有歧义，容易让人产生误解。应该是CloneSetName，cloneset层面唯一标识。
+	// CloneSetName，cloneset层面唯一标识。
 	// 命名建议格式：<appID>-<appName>-<groupID>-<env>，示例：12122-my-web-app-10010-prod
-	//InstanceName string `json:"instanceName"`
 	CloneSetName string `json:"clonesetName"`
 
 	// Selector is a label query over pods that should match the replica count.
 	// It must match the pod template's labels.
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+	// 选择器，Controller 和 Pod 之间的桥梁。
+	// 这个字段的作用是告诉控制器哪些POD属于这个应用。确保在更新、扩缩容时操作的是正确的Pod
 	Selector *metav1.LabelSelector `json:"selector"`
 
 	// Template describes the pods that will be created.
@@ -88,22 +108,26 @@ type ApplicationSpec struct {
 }
 
 // DeployFlowSpec defines the desired state of DeployFlow
+// 发布策略的定义
 type DeployFlowSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Action defines the action of deployflow, ex: create, update, restart, scale...
+	// 部署类型：create/update/restart/scale
 	Action string `json:"action"`
 
 	// Application defines somethings about app to deploy
+	// 声明应用终态。
 	Application *ApplicationSpec `json:"application"`
 
-	// +nullable
+	// 更新策略，金丝雀发布，普通批次发布。声明过程约束
 	UpdateStrategy *DeployUpdateStrategy `json:"updateStrategy,omitempty"`
 
-	// +nullable
+	// 非更新操作策略，重启/扩缩容
 	NonUpdateStrategy *DeployNonUpdateStrategy `json:"nonUpdateStrategy,omitempty"`
 }
+
 type DeployUpdateStrategy struct {
 	BaseStrategy `json:",inline"`
 
@@ -185,8 +209,7 @@ type DeployFlowStatus struct {
 	// UpdateRevision, if not empty, indicates the latest revision of the CloneSet.
 	UpdateRevision string `json:"updateRevision,omitempty"`
 
-	// +kubebuilder:validation:Optional
-	// +nullable
+	// 批次状态明细（子状态）
 	Conditions []BatchCondition `json:"conditions"`
 
 	// +kubebuilder:validation:Optional
@@ -195,11 +218,11 @@ type DeployFlowStatus struct {
 
 	// +kubebuilder:validation:Optional
 	Paused bool `json:"paused"`
-	// +kubebuilder:validation:Optional
+	// 全局阶段（Pending/Processing/Success）
 	Phase DeployPhase `json:"phase"`
 	// +kubebuilder:validation:Optional
 	Finished bool `json:"finished"`
-	// +kubebuilder:validation:Optional
+	// 总批次数
 	Batches int `json:"batches"`
 	// +kubebuilder:validation:Optional
 	FinishedBatches int `json:"finishedBatches"`
@@ -218,9 +241,12 @@ type DeployFlowStatus struct {
 }
 
 type BatchCondition struct {
-	Batch          int        `json:"batch"`
-	BatchSize      int        `json:"batchSize"`
-	Canary         bool       `json:"canary"`
+	// 当前批次
+	Batch int `json:"batch"`
+	// 批次大小
+	BatchSize int  `json:"batchSize"`
+	Canary    bool `json:"canary"`
+	// 批次阶段（Smoked/Baking/Baked）
 	Phase          BatchPhase `json:"phase"`
 	FailedReplicas int        `json:"failedReplicas"`
 

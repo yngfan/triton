@@ -596,6 +596,7 @@ func (d *Deploy) MarkCurrentBatchAsStarted(startedAt metav1.Time) {
 	d.SetCondition(*c)
 }
 
+// 标记当前批次进入 Smoked 阶段
 func (d *Deploy) MarkCurrentBatchAsSmoked() {
 	c := d.CurrentBatchInfo()
 	if c != nil {
@@ -618,6 +619,7 @@ func (d *Deploy) MarkCurrentBatchAsBaking() {
 	d.SetCondition(*c)
 }
 
+// 标记当前批次进入 Baked 阶段
 func (d *Deploy) MarkCurrentBatchAsFinished() {
 	c := d.CurrentBatchInfo()
 	if c != nil {

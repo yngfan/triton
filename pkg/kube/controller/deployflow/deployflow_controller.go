@@ -110,6 +110,7 @@ func newReconciler(mgr ctrl.Manager) reconcile.Reconciler {
 		logger:   logger,
 		recorder: recorder,
 	}
+	// 委托模式，将具体实现委托给 reconcileFunc
 	reconciler.reconcileFunc = reconciler.doReconcile
 
 	return reconciler
@@ -166,6 +167,7 @@ var _ reconcile.Reconciler = &DeployFlowReconciler{}
 // Reconcile reads that state of the cluster for a CloneSet object and makes changes based on the state read
 // and what is in the CloneSet.Spec
 func (r *DeployFlowReconciler) Reconcile(req reconcile.Request) (reconcile.Result, error) {
+	// 相当于一个请求分发器，将apiserver推送的调谐请求，转发给具体的业务函数处理。
 	return r.reconcileFunc(context.TODO(), req)
 }
 
